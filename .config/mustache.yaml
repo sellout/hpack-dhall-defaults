@@ -1,0 +1,11 @@
+{
+  "project":
+    {
+      "description": "hpack-dhall configuration shared across all of my projects.",
+      "name": "hpack-dhall-defaults",
+      "repo": "sellout/hpack-dhall-defaults",
+      "summary": "hpack-dhall configuration shared across all of my projects",
+      "version": "0.1.0",
+    },
+  "type": { "name": "dhall" },
+}
