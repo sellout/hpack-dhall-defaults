@@ -1,6 +1,6 @@
 let H =
       https://sellout.github.io/hall/package.dhall
-        sha256:c99fc45c4f1a80fff807ff3430d4d1d17dec0cfc4abc26ca503223317bdb3019
+        sha256:e3bb101e3c8ba2f65aa5b4f3156a6ef116f07ad24ecf3c7214f48a686517168c
 
 let Pvp = H.PVP
 
