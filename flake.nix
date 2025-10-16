@@ -92,8 +92,9 @@
         });
       };
 
-      projectConfigurations =
-        flaky.lib.projectConfigurations.dhall {inherit pkgs self;};
+      projectConfigurations = flaky.lib.projectConfigurations.dhall {
+        inherit pkgs self supportedSystems;
+      };
 
       devShells =
         self.projectConfigurations.${system}.devShells
@@ -108,11 +109,14 @@
 
     flake-utils.follows = "flaky/flake-utils";
     nixpkgs.follows = "flaky/nixpkgs";
-    systems.follows = "flaky/systems";
 
     hall = {
       inputs.flaky.follows = "flaky";
       url = "github:sellout/hall";
     };
+
+    ## Unlike `flaky/systems`, this one doesn’t have i686-linux, which isn’t
+    ## supported by Dhall.
+    systems.url = "github:nix-systems/default";
   };
 }
