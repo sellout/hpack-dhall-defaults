@@ -2,6 +2,7 @@
 
 [![built with garnix](https://img.shields.io/endpoint?url=https%3A%2F%2Fgarnix.io%2Fapi%2Fbadges%2Fsellout%2Fhpack-dhall-defaults)](https://garnix.io/repo/sellout/hpack-dhall-defaults)
 [![Nix CI](https://nix-ci.com/badge/gh:sellout:hpack-dhall-defaults)](https://nix-ci.com/gh:sellout:hpack-dhall-defaults)
+[![Project Manager](https://img.shields.io/badge/%20-Project%20Manager-%235277C3?logo=nixos&labelColor=%23cccccc)](https://sellout.github.io/project-manager/)
 
 hpack-dhall configuration shared across all of my projects.
 
