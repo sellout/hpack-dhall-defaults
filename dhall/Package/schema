@@ -1,0 +1,22 @@
+let H =
+      https://raw.githubusercontent.com/sellout/hall/refs/heads/typed-hpack/dhall/package.dhall
+        sha256:b705bc156141d8a9c52fcacabc991282a3601564a83b2a2e38f60f0ba018f93d
+
+let Pvp = H.PVP
+
+let hpack = H.hpack
+
+let schema =
+      λ(rec : (Type → Type) → Type) →
+      λ(minimumGhcVersion : Pvp.Version) →
+        { Type = hpack.Package.Type (λ(f : Type → Type) → f (rec f))
+        , default = ./default rec minimumGhcVersion
+        }
+
+let testMinimalRequiredFields =
+      (schema (λ(_ : Type → Type) → <>) (Pvp.v [ 0, 0, 0 ]))::{
+      , name = "hpack-dhall-defaults"
+      , version = "0.0.0"
+      }
+
+in  schema
