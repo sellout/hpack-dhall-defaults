@@ -1,0 +1,7 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License
+
+let conjoin = ./conjoin
+
+in  conjoin License.and

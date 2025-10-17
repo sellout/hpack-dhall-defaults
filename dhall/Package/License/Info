@@ -1,0 +1,5 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License.Type
+
+in  { license : Optional License, license-file : List Text }

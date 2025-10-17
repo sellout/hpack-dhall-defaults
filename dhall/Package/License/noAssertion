@@ -1,0 +1,7 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License.Type
+
+let LicenseInfo = ./Info
+
+in  { license = None License, license-file = [] : List Text } : LicenseInfo

@@ -1,0 +1,13 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License.Type
+
+let LicenseInfo = ./Info
+
+let SimpleInfo = ./SimpleInfo
+
+in  \(simple : SimpleInfo) ->
+        { license = Some (License.Expression simple.simple)
+        , license-file = [ simple.license-file ]
+        }
+      : LicenseInfo

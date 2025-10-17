@@ -1,0 +1,48 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License.Type
+
+let LicenseInfo = ./Info
+
+in  λ(conjunction : List (Optional License) → Optional License) →
+    λ(exprs : List LicenseInfo) →
+      let meh =
+            List/fold
+              LicenseInfo
+              exprs
+              { licenses : List (Optional License), files : List Text }
+              ( λ(expr : LicenseInfo) →
+                λ ( tail
+                  : { licenses : List (Optional License), files : List Text }
+                  ) →
+                  { licenses = [ expr.license ] # tail.licenses
+                  , files = expr.license-file # tail.files
+                  }
+              )
+              { licenses = [] : List (Optional License)
+              , files = [] : List Text
+              }
+
+      let license = conjunction meh.licenses
+
+      in    { license
+            , license-file =
+                -- If we ended up with no licenses, make sure we have no license
+                -- files.
+                merge
+                  { None = [] : List Text
+                  , Some =
+                      λ(l : License) →
+                        merge
+                          { NONE = [] : List Text
+                          , -- TODO: It’s still possible that _some_ licenses got
+                            --       filtered out via an `and` with `NONE`, in which
+                            --       case this will have license files that aren’t
+                            --       referenced by the license expression.
+                            Expression = λ(_ : Text) → meh.files
+                          }
+                          l
+                  }
+                  license
+            }
+          : LicenseInfo

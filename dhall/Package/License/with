@@ -1,0 +1,14 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License
+
+let LicenseInfo = ./Info
+
+let SimpleInfo = ./SimpleInfo
+
+in  λ(license : SimpleInfo) →
+    λ(addition : SimpleInfo) →
+        { license = License.`with` license.simple addition.simple
+        , license-file = [ license.license-file, addition.license-file ]
+        }
+      : LicenseInfo

@@ -1,0 +1,22 @@
+{-| Combine this with your section or package to disable recursion.
+-}
+let D = ../dependencies.dhall
+
+let P = D.Prelude
+
+let H = D.hall
+
+let Pvp = H.PVP
+
+let Option = < Disable >
+
+let showOption = λ(option : Option) → merge { Disable = "disable" } option
+
+in  λ(a : Type) →
+    λ(versions : List Pvp.Version) →
+    λ(options : List Option) →
+      ./enablePlugin
+        a
+        "NoRecursion"
+        (toMap { no-recursion = versions })
+        (P.List.map Option Text showOption options)

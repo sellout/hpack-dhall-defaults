@@ -1,0 +1,13 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let hpack = H.hpack
+
+let default = ./default
+
+in  λ(a : Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+      { Type = hpack.Executable.Type a
+      , default = default a minimumGhcVersion : hpack.Executable.DefaultType a
+      }

@@ -1,0 +1,5 @@
+let SimpleInfo = ./SimpleInfo
+
+let generate = ./generate
+
+in  λ(id : Text) → { simple = id, license-file = generate id } : SimpleInfo

@@ -1,0 +1,13 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let hpack = H.hpack
+
+let -- So we can pick up anything we overrode for non-sub libraries.
+    Library =
+      ../Library/package.dhall
+
+in  λ(a : Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+      hpack.Sublibrary.default a ⫽ Library.default a minimumGhcVersion

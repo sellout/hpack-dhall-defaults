@@ -1,0 +1,14 @@
+let H = (../../dependencies.dhall).hall
+
+let License = H.hpack.License
+
+let AdditionInfo = ./SimpleInfo
+
+let generate = ./generate
+
+in  λ(document : Optional Text) →
+    λ(ref : Text) →
+        { simple = License.additionRef document ref
+        , license-file = generate ref
+        }
+      : AdditionInfo

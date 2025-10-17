@@ -1,0 +1,17 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let language = H.GHC.LanguageEdition
+
+let hpack = H.hpack
+
+let Common = ../Common/package.dhall
+
+in  λ(a : Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+      (hpack.Executable.schema a)::( Common.languageCompatibleWith
+                                       a
+                                       language.GHC2024
+                                       minimumGhcVersion
+                                   )

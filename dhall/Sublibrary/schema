@@ -1,0 +1,19 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let ghc = H.GHC.Release
+
+let hpack = H.hpack
+
+let schema =
+      λ(a : Type) →
+      λ(minimumGhcVersion : Pvp.Version) →
+          { Type = hpack.Sublibrary.Type a
+          , default = ./default a minimumGhcVersion
+          }
+        : { Type : Type, default : hpack.Sublibrary.DefaultType a }
+
+let testMinimalRequiredFields = (schema <> ghc.v9-0-1.version)::{=}
+
+in  schema

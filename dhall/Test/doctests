@@ -1,0 +1,72 @@
+let D = ../dependencies.dhall
+
+let P = D.Prelude
+
+let H = D.hall
+
+let Pvp = H.PVP
+
+let ghc = H.GHC.Release
+
+let hpack = H.hpack
+
+let Binary = ../Binary/package.dhall
+
+in  λ(a : Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+    λ(requiredDeps : { base : List Pvp.Version, doctest : List Pvp.Version }) →
+    λ ( overrides
+      : { dependencies : P.Map.Type Text (List Pvp.Version)
+        , when : List (hpack.Conditional.Type (hpack.Test.Type a))
+        }
+      ) →
+      (Binary.schema (hpack.Test.Type a) minimumGhcVersion)::{
+      , main = Some "doctests.hs"
+      , source-dirs = [ "tests" ]
+      , default-extensions = [ "Unsafe" ]
+      , dependencies =
+          H.Cabal.buildPvpDependencies
+            (toMap requiredDeps # overrides.dependencies)
+      , when =
+            [ hpack.Conditional.ifGhcImpl
+                (hpack.Test.Type a)
+                ">="
+                ghc.v8-0-1.version
+                (hpack.Test.schema a)::{
+                , ghc-options = [ "-Wno-missing-import-lists", "-Wno-safe" ]
+                }
+                (hpack.Test.schema a)::{
+                , ghc-options = [ "-fno-warn-missing-import-lists" ]
+                }
+            , hpack.Conditional.ifGhcImpl
+                (hpack.Test.Type a)
+                ">="
+                ghc.v8-4-1.version
+                (hpack.Test.schema a)::{
+                , ghc-options = [ "-Wno-missing-export-lists" ]
+                }
+                (hpack.Test.default a)
+            , hpack.Conditional.ifGhcImpl
+                (hpack.Test.Type a)
+                ">="
+                ghc.v8-8-1.version
+                (hpack.Test.schema a)::{
+                , ghc-options = [ "-Wno-missing-deriving-strategies" ]
+                }
+                (hpack.Test.default a)
+            , hpack.Conditional.ifGhcImpl
+                (hpack.Test.Type a)
+                ">="
+                ghc.v8-10-1.version
+                (hpack.Test.schema a)::{
+                , -- `doctest` requires the package containing the
+                  -- doctests as a dependency to ensure it gets built
+                  -- before this test-suite, even though the package
+                  -- appears to be unused.
+                  ghc-options =
+                  [ "-Wno-unused-packages" ]
+                }
+                (hpack.Test.default a)
+            ]
+          # overrides.when
+      }

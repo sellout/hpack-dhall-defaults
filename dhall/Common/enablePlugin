@@ -1,0 +1,25 @@
+{-| Combine this with your section or package to disable recursion.
+-}
+let D = ../dependencies.dhall
+
+let P = D.Prelude
+
+let H = D.hall
+
+let Pvp = H.PVP
+
+in  λ(a : Type) →
+    λ(pluginName : Text) →
+    λ(dependencies : P.Map.Type Text (List Pvp.Version)) →
+    λ(options : List Text) →
+      { dependencies = H.Cabal.buildPvpDependencies dependencies
+      , ghc-options =
+            [ "-fplugin=" ++ pluginName ]
+          # P.List.map
+              Text
+              Text
+              ( λ(option : Text) →
+                  "-fplugin-opt=" ++ pluginName ++ ":" ++ option
+              )
+              options
+      }

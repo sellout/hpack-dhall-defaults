@@ -1,0 +1,29 @@
+{-|
+
+NB: Despite being on `Common`, this needs to be applied to sections individually
+    (not on the `Package`), because `verbatim` doesn’t propagate.
+-}
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let LanguageEdition = H.GHC.LanguageEdition
+
+let hpack = H.hpack
+
+in  λ(a : Type) →
+    λ(languageEdition : LanguageEdition.Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+      let language =
+            LanguageEdition.compatibleWith languageEdition minimumGhcVersion
+
+      in  { verbatim =
+            [ hpack.Verbatim.Structure.Object
+                ( toMap
+                    { default-language =
+                        hpack.Verbatim.Type.String language.baseEdition.name
+                    }
+                )
+            ]
+          , default-extensions = language.additionalExtensions
+          }

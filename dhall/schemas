@@ -1,0 +1,69 @@
+{-| Exposes a consistent set of the schemas.
+
+NB: Because conditionals are “built in” to some of the defaults, this will allow
+    one more layer of conditional than is specified by the `rec` parameter. For
+    example, `λ(_ : Type → Type) → <>` will still allow a single level of
+    conditional.
+-}
+let D = ./dependencies.dhall
+
+let H = D.hall
+
+let Pvp = H.PVP
+
+let hpack = H.hpack
+
+let schemas =
+      λ(rec : (Type → Type) → Type) →
+      λ(minimumGhcVersion : Pvp.Version) →
+        let -- Whatever the provided `rec` function does, we need one _extra_
+            -- layer on everything except for `doctests`, because `dectests`
+            -- adds an extra layer inside. So for everything to match, it needs
+            -- one more.
+            extra =
+              λ(f : Type → Type) → f (rec f)
+
+        in  { Binary =
+                ./Binary/schema (extra hpack.Executable.Type) minimumGhcVersion
+            , Library =
+                ./Library/schema (extra hpack.Library.Type) minimumGhcVersion
+            , Package = ./Package/schema extra minimumGhcVersion
+            , Sublibrary =
+                ./Sublibrary/schema
+                  (extra hpack.Sublibrary.Type)
+                  minimumGhcVersion
+            , -- NB: This requires the conditionals internally, so we don’t use
+              --     `extra` here.
+              doctests = ./Test/doctests (rec hpack.Test.Type) minimumGhcVersion
+            , readme = ./Test/readme (extra hpack.Test.Type) minimumGhcVersion
+            }
+
+let test = schemas (λ(_ : Type → Type) → <>) (Pvp.v [ 9, 6, 5 ])
+
+let -- Make sure all the `rec` types line up
+    checkAlignment =
+      test.Package::{
+      , name = "dummy"
+      , version = "0.0.0.0"
+      , library = Some test.Library::{=}
+      , internal-libraries = toMap { example = test.Sublibrary::{=} }
+      , tests = toMap
+          { doctests =
+              test.doctests
+                { base = [] : List Pvp.Version
+                , doctest = [] : List Pvp.Version
+                }
+                { dependencies = D.Prelude.Map.empty Text (List Pvp.Version)
+                , when = [] : List (hpack.Conditional.Type (hpack.Test.Type <>))
+                }
+          , readme =
+              test.readme
+                { markdown-unlit = [] : List Pvp.Version }
+                { dependencies = D.Prelude.Map.empty Text (List Pvp.Version)
+                , when = [] : List (hpack.Conditional.Type (hpack.Test.Type <>))
+                }
+          , more-tests = test.Binary::{=}
+          }
+      }
+
+in  schemas

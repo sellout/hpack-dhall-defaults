@@ -1,0 +1,36 @@
+{-| Tests the package README as a literate Haskell file.
+
+This uses [markdown-unlit](https://github.com/sol/markdown-unlit#readme).
+-}
+let D = ../dependencies.dhall
+
+let P = D.Prelude
+
+let H = D.hall
+
+let Pvp = H.PVP
+
+let ghc = H.GHC.Release
+
+let hpack = H.hpack
+
+let Binary = ../Binary/package.dhall
+
+in  λ(a : Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+    λ(requiredDeps : { markdown-unlit : List Pvp.Version }) →
+    λ ( overrides
+      : { dependencies : P.Map.Type Text (List Pvp.Version)
+        , when : List (hpack.Conditional.Type a)
+        }
+      ) →
+      (Binary.schema a minimumGhcVersion)::{
+      , main = Some "README.lhs"
+      , dependencies = H.Cabal.buildPvpDependencies overrides.dependencies
+      , ghc-options = [ "-pgmL markdown-unlit" ]
+      , build-tools =
+        [     "markdown-unlit:markdown-unlit "
+          ++  H.Cabal.buildVersionRange requiredDeps.markdown-unlit
+        ]
+      , when = overrides.when
+      }

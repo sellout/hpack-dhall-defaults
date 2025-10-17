@@ -1,0 +1,151 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let ghc = H.GHC.Release
+
+let language = H.GHC.LanguageEdition
+
+let hpack = H.hpack
+
+let Comp = hpack.Conditional.Comparator.Type
+
+let -- I’m not sure if there’s anything more I can do to advertise availability
+    -- of commercial licensing terms. I need to figure out where an SPDX
+    -- `DocumentRef`points, and then maybe I can use that.
+    License =
+      ./License/package.dhall
+
+in  λ(rec : (Type → Type) → Type) →
+    λ(minimumGhcVersion : Pvp.Version) →
+        ( hpack.Package.Default.schema (λ(f : Type → Type) → f (rec f))
+        )::(   License.finalize
+                 ( License.or
+                     [ License.`with`
+                         (License.id "AGPL-3.0-only")
+                         (License.id "Universal-FOSS-exception-1.0")
+                     , License.simple (License.ref (None Text) "commercial")
+                     ]
+                 )
+                 [ "LICENSE" ]
+             ⫽ { author = [ "Greg Pfeil <greg@technomadic.org>" ]
+               , maintainer = [ "Greg Pfeil <greg@technomadic.org>" ]
+               , extra-doc-files = [ "CHANGELOG.md", "README.md", "docs/*.md" ]
+               , flags = toMap
+                   { noisy-deprecations =
+                     { -- TODO: hpack doesn’t indent multi-line flag descriptions.
+                       --       See sol/hpack#622
+                       description = Some
+                         "Prior to GHC 9.10, the `DEPRECATED` pragma can’t distinguish between terms and types. Consenquently, you can get spurious warnings when there’s a name collision and the name in the other namespace is deprecated. Or you can choose to not get those warnings, at the risk of not being warned when there’s a name collision and the namespace you’re referencing is the one that’s deprecated."
+                     , default = True
+                     , manual = True
+                     }
+                   }
+               , -- TODO: Everything from here down should move to a `common` stanza,
+                 --       once supported by hpack. See sol/hpack#569
+                 ghc-options =
+                 [ "-Wtrustworthy-safe" ]
+               , default-extensions =
+                     [ "DefaultSignatures"
+                     , "FunctionalDependencies"
+                     , "LiberalTypeSynonyms"
+                     , "PackageImports"
+                     , "ParallelListComp"
+                     , "RecursiveDo"
+                     , "TransformListComp"
+                     , "NoForeignFunctionInterface"
+                     , "NoGeneralizedNewtypeDeriving"
+                     , "NoImplicitPrelude"
+                     , "NoMonomorphismRestriction"
+                     , "NoPatternGuards"
+                     ]
+                   # ( if    Pvp.lessThanEqual
+                               ghc.v8-0-1.version
+                               minimumGhcVersion
+                       then    [ "StrictData"
+                               , "TemplateHaskellQuotes"
+                               , "NoTypeApplications"
+                               ]
+                             # ( if    Pvp.lessThanEqual
+                                         ghc.v9-0-1.version
+                                         minimumGhcVersion
+                                 then    [ "LexicalNegation", "QualifiedDo" ]
+                                       # ( if    Pvp.lessThanEqual
+                                                   ghc.v9-10-1.version
+                                                   minimumGhcVersion
+                                           then  [ "RequiredTypeArguments" ]
+                                           else  [] : List Text
+                                         )
+                                 else  [ "NegativeLiterals" ]
+                               )
+                       else  [] : List Text
+                     )
+               , -- TODO: replace `ifGHCImpl … ">="` with `hpack.Conditional.maybe
+                 --       … minimumGhcVersion Comp.GE` once it merges better.
+                 when =
+                 [ hpack.Conditional.ifGhcImpl
+                     (hpack.Common.Type (rec hpack.Common.Type))
+                     ">="
+                     ghc.v8-0-1.version
+                     (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , default-extensions = [ "StrictData" ]
+                     , -- all-missed-spec: This one just reports unfixable things, AFAICT.
+                       -- missing-local-sig: Type inference good.
+                       -- unsafe: Warns even when `Unsafe` is explicit, not inferred. See
+                       -- https://gitlab.haskell.org/ghc/ghc/-/issues/16689
+                       ghc-options =
+                       [ "-Weverything"
+                       , "-Wno-all-missed-specialisations"
+                       , "-Wno-missing-local-signatures"
+                       , "-Wno-unsafe"
+                       ]
+                     }
+                     (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , ghc-options = [ "-Wall" ]
+                     }
+                 , hpack.Conditional.ifGhcImpl
+                     (hpack.Common.Type (rec hpack.Common.Type))
+                     ">="
+                     ghc.v8-10-1.version
+                     (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , -- inferred-safe: If we didn’t allow inferred-safe imports, nothing would be `Safe`.
+                       -- prepositive: We support GHC versions without qualified-post.
+                       ghc-options =
+                       [ "-Wno-inferred-safe-imports"
+                       , "-Wno-prepositive-qualified-module"
+                       ]
+                     }
+                     (hpack.Common.default (rec hpack.Common.Type))
+                 , hpack.Conditional.ifGhcImpl
+                     (hpack.Common.Type (rec hpack.Common.Type))
+                     ">="
+                     ghc.v9-2-1.version
+                     (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , -- missing-kind: We support GHC versions without kind signatures.
+                       ghc-options =
+                       [ "-Wno-missing-kind-signatures" ]
+                     }
+                     (hpack.Common.default (rec hpack.Common.Type))
+                 , hpack.Conditional.ifGhcImpl
+                     (hpack.Common.Type (rec hpack.Common.Type))
+                     ">="
+                     ghc.v9-8-1.version
+                     (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , -- missing-poly-kind: We support GHC versions without kind signatures.
+                       -- missing-role: Inference good.
+                       ghc-options =
+                       [ "-Wno-missing-poly-kind-signatures"
+                       , "-Wno-missing-role-annotations"
+                       ]
+                     }
+                     (hpack.Common.default (rec hpack.Common.Type))
+                 , { condition = "flag(noisy-deprecations)"
+                   , `then` = (hpack.Common.schema (rec hpack.Common.Type))::{
+                     , cpp-options = [ "-DSELLOUT_NOISY_DEPRECATIONS" ]
+                     }
+                   , `else` = hpack.Common.default (rec hpack.Common.Type)
+                   }
+                 ]
+               }
+           )
+      : hpack.Package.Default.Type (λ(f : Type → Type) → f (rec f))

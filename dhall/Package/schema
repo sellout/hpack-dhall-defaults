@@ -1,0 +1,20 @@
+let H = (../dependencies.dhall).hall
+
+let Pvp = H.PVP
+
+let hpack = H.hpack
+
+let schema =
+      λ(rec : (Type → Type) → Type) →
+      λ(minimumGhcVersion : Pvp.Version) →
+        { Type = hpack.Package.Type (λ(f : Type → Type) → f (rec f))
+        , default = ./default rec minimumGhcVersion
+        }
+
+let testMinimalRequiredFields =
+      (schema (λ(_ : Type → Type) → <>) (Pvp.v [ 0, 0, 0 ]))::{
+      , name = "hpack-dhall-defaults"
+      , version = "0.0.0"
+      }
+
+in  schema

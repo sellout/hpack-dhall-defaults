@@ -87,7 +87,10 @@
         "${pname}" = pkgs.checkedDrv (pkgs.dhallPackages.buildDhallDirectoryPackage {
           src = "${src}/dhall";
           name = pname;
-          dependencies = [pkgs.dhallPackages.hall];
+          dependencies = [
+            pkgs.dhallPackages.Prelude
+            pkgs.dhallPackages.hall
+          ];
           document = true;
         });
       };
@@ -112,7 +115,7 @@
 
     hall = {
       inputs.flaky.follows = "flaky";
-      url = "github:sellout/hall";
+      url = "github:sellout/hall/typed-hpack";
     };
 
     ## Unlike `flaky/systems`, this one doesn’t have i686-linux, which isn’t

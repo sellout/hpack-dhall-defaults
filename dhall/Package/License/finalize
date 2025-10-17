@@ -1,0 +1,5 @@
+let LicenseInfo = ./Info
+
+in  λ(info : LicenseInfo) →
+    λ(extraFiles : List Text) →
+      { license = info.license, license-file = extraFiles # info.license-file }
